@@ -22,14 +22,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan("tiny", { stream }));
 
-//Error middleware
-app.use(function(error, req, res, next) {
-    res.status(200).json({
-        status: "nok",
-        message: error.message,
-    });
-});
-
 app.get("/", (req, res) => {
     res.send("Server");
 });
@@ -53,6 +45,14 @@ app.get("/v3/doctor", authMiddleware, wrapAsync(ctrl.doctor));
 
 // register
 app.post("/v3/std/reg", authMiddleware, wrapAsync(ctrl.register));
+
+//Error middleware
+app.use(function(error, req, res, next) {
+    res.status(200).json({
+        status: "nok",
+        message: error.message,
+    });
+});
 
 // port
 const port = process.env.PORT;
