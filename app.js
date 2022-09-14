@@ -55,7 +55,7 @@ app.post("/v3/std/reg", authMiddleware, wrapAsync(ctrl.register));
 app.post('/v3/doctorPost', authMiddleware, wrapAsync(ctrl.doctorPost));
 
 //doctorInfoPost
-app.post('/v3/doctorInfoPost', wrapAsync(ctrl.doctorDetailPost));
+app.post('/v3/doctorInfoPost', authMiddleware, wrapAsync(ctrl.doctorDetailPost));
 
 //Error middleware
 app.use(function (error, req, res, next) {
