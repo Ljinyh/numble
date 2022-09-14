@@ -1,11 +1,12 @@
 const express = require("express");
-const { stream } = require("./middleware/logger");
 const mongoose = require("mongoose");
 const connectDB = require("./db/database");
+const morgan = require("morgan");
+const helmet = require("helmet");
+const { stream } = require("./middleware/logger");
 const ctrl = require("./controller/index");
 const authMiddleware = require("./middleware/authMiddleware");
 const wrapAsync = require("./middleware/errorHandler");
-const morgan = require("morgan");
 require("dotenv").config();
 
 // DB connect
@@ -19,13 +20,17 @@ const app = express();
 
 // body parser
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(morgan("tiny", { stream }));
+app.use(express.urlencoded({ extended: true }));
 
+app.use(morgan("tiny", { stream }));
+app.use(helmet());
+
+//최상위
 app.get("/", (req, res) => {
     res.send("Server");
 });
 
+//api
 app.get("/v3/test", wrapAsync(ctrl.test));
 
 // 회원가입
@@ -46,8 +51,14 @@ app.get("/v3/doctor", authMiddleware, wrapAsync(ctrl.doctor));
 // register
 app.post("/v3/std/reg", authMiddleware, wrapAsync(ctrl.register));
 
+//doctorPost
+app.post('/v3/doctorPost', authMiddleware, wrapAsync(ctrl.doctorPost));
+
+//doctorInfoPost
+app.post('/v3/doctorInfoPost', wrapAsync(ctrl.doctorDetailPost));
+
 //Error middleware
-app.use(function(error, req, res, next) {
+app.use(function (error, req, res, next) {
     res.status(200).json({
         status: "nok",
         message: error.message,

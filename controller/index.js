@@ -5,14 +5,16 @@ const Joi = require("joi");
 //models
 const User = require("../model/user");
 const Register = require("../model/register");
+const DOCTOR = require('../model/doctorInfo');
+const DOCTORINFO = require('../model/doctorDetail');
 
 module.exports = {
-    test: async(req, res) => {
+    test: async (req, res) => {
         res.status(200).send({ data: {} });
     },
 
     // 회원가입
-    signup: async(req, res) => {
+    signup: async (req, res) => {
         //validation
         const UserSchema = Joi.object({
             email: Joi.string()
@@ -45,8 +47,8 @@ module.exports = {
 
             const token = JWT.sign({ userId: user.userId },
                 process.env.SECRET_KEY, {
-                    expiresIn: "2d",
-                }
+                expiresIn: "2d",
+            }
             );
 
             res.status(200).json({
@@ -63,7 +65,7 @@ module.exports = {
     },
 
     //회원삭제
-    withdrawal: async(req, res) => {
+    withdrawal: async (req, res) => {
         const { userId } = res.locals.user;
         await User.findByIdAndDelete(userId);
         return res.status(200).json({
@@ -72,7 +74,7 @@ module.exports = {
     },
 
     //로그인
-    signin: async(req, res) => {
+    signin: async (req, res) => {
         const { email, key } = req.body;
         const findUser = await User.findOne({ email: email });
 
@@ -87,8 +89,8 @@ module.exports = {
                 //비밀번호까지 맞다면 토큰을 생성하기.
                 const token = JWT.sign({ userId: findUser.userId },
                     process.env.SECRET_KEY, {
-                        expiresIn: "3d",
-                    }
+                    expiresIn: "3d",
+                }
                 );
 
                 return res.status(200).json({
@@ -105,66 +107,37 @@ module.exports = {
         }
     },
 
-    doctorList: async(req, res) => {
-        //sample data
-        const doctors = [{
-            id: "test",
-            doctor_display_name: "윈터",
-            doctor_image_url: "https://photo.newsen.com/mphoto/2022/06/24/202206241807463510_1.jpg",
-            hospital_name: "SM 엔터테인먼트",
-            hospital_address: "서울특별시 성동구 왕십리로 83-21 에스엠엔터테인먼트",
-            description: "안녕하세요!",
-            hospital_img: "https://search.pstatic.net/common/?autoRotate=true&quality=95&type=w750&src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20210809_254%2F1628490646641wLE0B_JPEG%2FOYFVJ_qgIB14KM3Zz8AIhJxF.jpg",
-        }, ];
+    // 의사정보 가져오기
+    doctorList: async (req, res) => {
+        const doctor_List = await DOCTOR.find({});
 
-        // const doctor_List = await Info.find({});
-
-        // if (doctor_List) {
-        return res.status(200).json({
-            status: "ok",
-            data: {
-                doctors: doctors,
-            },
-        });
-        // }
+        if (doctor_List) {
+            return res.status(200).json({
+                status: "ok",
+                data: {
+                    doctors: doctor_List,
+                },
+            });
+        }
     },
 
-    doctor: async(req, res) => {
-        //sample data
-        const doctor = {
-            doctor_id: "test",
-            available_hours: "언제든 가능합니다.",
-            available_weekday: "아무때나 진료 가능.",
-            description: "안녕하세요!?",
-            doctor_display_name: "윈터",
-            doctor_image_url: "https://photo.newsen.com/mphoto/2022/06/24/202206241807463510_1.jpg",
-            doctor_images: JSON.stringify([{
-                type: 1,
-                url: "https://photo.newsen.com/mphoto/2022/06/24/202206241807463510_1.jpg",
-            }, ]),
-            doctor_tel: "01023456789",
-            hospital_addr: "서울특별시 성동구 왕십리로 83-21 에스엠엔터테인먼트",
-            hospital_name: "SM 엔터테인먼트",
-            lab_addr: "서울특별시 성동구 왕십리로 83-21 에스엠엔터테인먼트",
-            lab_name: "SM 엔터테인먼트",
-            lab_postal_code: "123456",
-            lab_receiver_name: "윈터",
-            lab_tel: "01023456789",
-            lat: "37.5443766",
-            lng: "127.043793",
-            professional_statement: "음반, 기획",
-            subjects: "에스파",
-        };
+    // 의사상세정보 가져오기
+    doctor: async (req, res) => {
+        const { doctor_id } = req.query;
+        const find_Doctor = await DOCTORINFO.findOne({ doctor_id: doctor_id });
 
-        return res.status(200).json({
-            status: "ok",
-            data: {
-                doctor: doctor,
-            },
-        });
+        if (find_Doctor) {
+            return res.status(200).json({
+                status: "ok",
+                data: {
+                    doctor: find_Doctor,
+                },
+            });
+        }
     },
 
-    register: async(req, res) => {
+    // 검사키트보내기
+    register: async (req, res) => {
         const { userId } = res.locals.user;
         const { doctor_id, address, address_code, store_address } = req.body;
 
@@ -180,4 +153,96 @@ module.exports = {
             status: "ok",
         });
     },
+
+    // 의사정보 등록
+    doctorPost: async (req, res) => {
+        const { doctor_display_name,
+            doctor_image_url,
+            hospital_name,
+            hospital_address,
+            description,
+            hospital_img } = req.body;
+
+        const findDoctor = await DOCTOR.findOne({ doctor_display_name, hospital_name });
+        if (findDoctor) {
+            return res.status(200).json({
+                status: 'ok',
+                message: '이미 있는 정보입니다.'
+            });
+        } else {
+            await DOCTOR.create({
+                doctor_display_name: doctor_display_name,
+                doctor_image_url: doctor_image_url,
+                hospital_name: hospital_name,
+                hospital_address: hospital_address,
+                description: description,
+                hospital_img: hospital_img
+            });
+            return res.status(200).json({
+                status: 'ok',
+                message: 'INSERT DOCTOR'
+            });
+        }
+    },
+
+    // 의사 상세정보 등록
+    doctorDetailPost: async (req, res) => {
+        const {
+            doctor_display_name,
+            available_hours,
+            available_weekday,
+            description,
+            doctor_image_url,
+            doctor_images,
+            doctor_tel,
+            hospital_addr,
+            hospital_name,
+            lab_addr,
+            lab_name,
+            lab_postal_code,
+            lab_receiver_name,
+            lab_tel,
+            lat,
+            lng,
+            professional_statement,
+            subjects
+        } = req.body;
+
+        const find_Doctor = await DOCTOR.findOne(doctor_display_name);
+        const FindInfo = await DOCTORINFO.findOne({ doctor_display_name });
+        if (FindInfo && find_Doctor) {
+            return res.status(200).json({
+                status: 'ok',
+                message: '이미 등록된 정보입니다.'
+            });
+        } else {
+            await DOCTORINFO.create({
+                doctor_id: find_Doctor.doctorId,
+                available_hours,
+                available_weekday,
+                description,
+                doctor_display_name,
+                doctor_image_url,
+                doctor_images,
+                doctor_tel,
+                hospital_addr,
+                hospital_name,
+                lab_addr,
+                lab_name,
+                lab_postal_code,
+                lab_receiver_name,
+                lab_tel,
+                lat,
+                lng,
+                professional_statement,
+                subjects
+            });
+
+            return res.status(200).json({
+                status: 'ok',
+                message: 'INSER OK'
+            });
+        }
+    }
+
 };
