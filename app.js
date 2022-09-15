@@ -4,9 +4,7 @@ const connectDB = require("./db/database");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const { stream } = require("./middleware/logger");
-const ctrl = require("./controller/index");
-const authMiddleware = require("./middleware/authMiddleware");
-const wrapAsync = require("./middleware/errorHandler");
+const router = require('./router/router');
 require("dotenv").config();
 
 // DB connect
@@ -31,31 +29,7 @@ app.get("/", (req, res) => {
 });
 
 //api
-app.get("/v3/test", wrapAsync(ctrl.test));
-
-// 회원가입
-app.post("/v3/user/reg", wrapAsync(ctrl.signup));
-
-// 회원삭제
-app.post("/v3/user/unreg", authMiddleware, wrapAsync(ctrl.withdrawal));
-
-//로그인
-app.post("/v3/auth/login", wrapAsync(ctrl.signin));
-
-//Get List
-app.get("/v3/doctor/list", authMiddleware, wrapAsync(ctrl.doctorList));
-
-//Get doctor Detail
-app.get("/v3/doctor", authMiddleware, wrapAsync(ctrl.doctor));
-
-// register
-app.post("/v3/std/reg", authMiddleware, wrapAsync(ctrl.register));
-
-//doctorPost
-app.post('/v3/doctorPost', authMiddleware, wrapAsync(ctrl.doctorPost));
-
-//doctorInfoPost
-app.post('/v3/doctorInfoPost', authMiddleware, wrapAsync(ctrl.doctorDetailPost));
+app.use('/v3', router);
 
 //Error middleware
 app.use(function (error, req, res, next) {
